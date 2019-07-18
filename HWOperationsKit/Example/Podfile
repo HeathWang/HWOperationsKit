@@ -1,0 +1,13 @@
+use_frameworks!
+
+platform :ios, '8.0'
+
+target 'HWOperationsKit_Example' do
+  pod 'HWOperationsKit', :path => '../'
+
+  target 'HWOperationsKit_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end

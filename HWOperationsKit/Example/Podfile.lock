@@ -1,0 +1,16 @@
+PODS:
+  - HWOperationsKit (0.1.0)
+
+DEPENDENCIES:
+  - HWOperationsKit (from `../`)
+
+EXTERNAL SOURCES:
+  HWOperationsKit:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  HWOperationsKit: 2d2d64ac6cd2b386a6e7885708ad84aaf3975cfc
+
+PODFILE CHECKSUM: 0d3b3699f01a89d1f1fe292ec8d9d99fdf76d1f9
+
+COCOAPODS: 1.7.4

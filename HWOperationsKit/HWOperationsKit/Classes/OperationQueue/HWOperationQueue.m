@@ -42,7 +42,7 @@
             [[operation.chainedOperations allObjects] enumerateObjectsUsingBlock:^(HWOperation <HWChainableOperationProtocol> *chainOP, NSUInteger idx, BOOL *stop) {
                 [self addOperation:chainOP];
             }];
-            [self addOperation:operation];
+//            [self addOperation:operation];
             return;
         }
 
@@ -70,20 +70,19 @@
             NSOperation *dependency = [condition dependencyForOperation:operation];
             if (dependency) {
                 [operation addDependency:dependency];
+                
+                // 处理通过`addCondition`添加的chainCondition
+//                if ([dependency isKindOfClass:HWOperation.class]) {
+//                    HWOperation *tmpOP = (HWOperation *)dependency;
+//                    [self addOperation:tmpOP];
+//                }
+                if (![self.operations containsObject:dependency]) {
+                    [self addOperation:dependency];
+                }
             }
         }
 
-        /*for (NSOperation *dependency in dependencies) {
-            [operation addDependency:dependency];
-
-            // TODO: 先按照自己的逻辑写
-            if ([dependency isKindOfClass:HWOperation.class]) {
-                HWOperation *hwOperation = (HWOperation *) dependency;
-
-            }
-        }*/
-
-        // 调用op的即将加入queue放大，触发监听
+        // 调用op的即将加入queue方法，触发监听
         [operation willEnqueueInOperationQueue:self];
     } else {
         // 原生的NSOperation我们需要知道它完成了，然后触发delegate回调
@@ -124,6 +123,10 @@
         _chainOperationsCache = [NSMutableSet set];
     }
     return _chainOperationsCache;
+}
+
+- (void)dealloc {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
 }
 
 @end

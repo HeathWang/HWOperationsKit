@@ -13,9 +13,6 @@
 #import "HWChainCondition.h"
 #import "HWBlockObserver.h"
 
-#define LOCK(lock) dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
-#define UNLOCK(lock) dispatch_semaphore_signal(lock);
-
 @interface HWOperation ()
 
 @property (nonatomic, assign) BOOL hasFinishedAlready;
@@ -30,7 +27,7 @@
 
 @property (nonatomic, strong) NSHashTable <HWOperation <HWChainableOperationProtocol> *> *chainedOperations;
 
-@property (nonatomic, strong) dispatch_semaphore_t semaphore;
+@property (nonatomic, strong) dispatch_queue_t safeQueue;
 
 @end
 
@@ -44,7 +41,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _semaphore = dispatch_semaphore_create(1);
+        _safeQueue = dispatch_queue_create("com.heath.HWOperationsKit", DISPATCH_QUEUE_CONCURRENT);
     }
 
     return self;
@@ -86,28 +83,30 @@
 #pragma mark - prop
 
 - (void)setState:(HWOperationState)state {
-    LOCK(self.semaphore)
-
-    [self willChangeValueForKey:@"state"];
-    NSAssert(_state != state, @"state状态转化错误，请检查！");
-    _state = state;
-    [self didChangeValueForKey:@"state"];
-
-    UNLOCK(self.semaphore)
+    dispatch_barrier_async(_safeQueue, ^{
+        [self willChangeValueForKey:@"state"];
+        NSAssert(self->_state != state, @"state状态转化错误，请检查！");
+        self->_state = state;
+        [self didChangeValueForKey:@"state"];
+    });
 }
 
 - (HWOperationState)state {
-    LOCK(self.semaphore)
-    HWOperationState state = _state;
-    UNLOCK(self.semaphore)
-    return state;
+//    __block HWOperationState state;
+//    dispatch_sync(_safeQueue, ^{
+//        state = self->_state;
+//    });
+//    return state;
+    return _state;
 }
 
 - (BOOL)isCancelled {
-    LOCK(self.semaphore)
-    BOOL cancel = _cancelled;
-    UNLOCK(self.semaphore)
-    return cancel;
+//    __block BOOL cancel;
+//    dispatch_sync(_safeQueue, ^{
+//        cancel = self->_cancelled;
+//    });
+//    return cancel;
+    return _cancelled;
 }
 
 /**
@@ -116,11 +115,11 @@
  * Support for cancellation is voluntary but encouraged and your own code should not have to send KVO notifications for this key path.
  */
 - (void)setCancelled:(BOOL)cancelled {
-    LOCK(self.semaphore)
-    [self willChangeValueForKey:@"cancelledState"];
-    _cancelled = cancelled;
-    [self didChangeValueForKey:@"cancelledState"];
-    UNLOCK(self.semaphore)
+    dispatch_barrier_async(_safeQueue, ^{
+        [self willChangeValueForKey:@"cancelledState"];
+        self->_cancelled = cancelled;
+        [self didChangeValueForKey:@"cancelledState"];
+    });
 }
 
 /**
@@ -275,6 +274,13 @@
     }];
 }
 
+- (NSHashTable<HWOperation<HWChainableOperationProtocol> *> *)chainedOperations {
+    if (!_chainedOperations) {
+        _chainedOperations = [NSHashTable hashTableWithOptions:NSPointerFunctionsWeakMemory];
+    }
+    return _chainedOperations;
+}
+
 #pragma mark - HWChainableOperationProtocol
 
 - (void)chainedOperation:(nonnull NSOperation *)operation didFinishWithErrors:(nullable NSArray <NSError *> *)errors passingAdditionalData:(nullable id)data {
@@ -364,16 +370,18 @@
 }
 
 - (BOOL)hasFinishedAlready {
-    LOCK(self.semaphore)
-    BOOL hasFinished = _hasFinishedAlready;
-    UNLOCK(self.semaphore)
-    return hasFinished;
+//    __block BOOL hasFinished;
+//    dispatch_sync(_safeQueue, ^{
+//        hasFinished = self->_hasFinishedAlready;
+//    });
+//    return hasFinished;
+    return _hasFinishedAlready;
 }
 
 - (void)setHasFinishedAlready:(BOOL)hasFinishedAlready {
-    LOCK(self.semaphore)
-    _hasFinishedAlready = hasFinishedAlready;
-    UNLOCK(self.semaphore)
+    dispatch_barrier_async(_safeQueue, ^{
+        self->_hasFinishedAlready = hasFinishedAlready;
+    });
 }
 
 #pragma mark - private method
@@ -410,5 +418,8 @@
     return _internalErrors;
 }
 
+- (void)dealloc {
+    NSLog(@"%@ dealloc", NSStringFromClass(self.class));
+}
 
 @end

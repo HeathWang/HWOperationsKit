@@ -9,7 +9,7 @@
 
 @optional
 
-- (void)chainedOperation:(nonnull NSOperation *)operation didFinishWithErrors:(nullable NSArray <NSError *>*)errors passingAdditionalData:(nullable id)data;
+- (void)chainedOperation:(__kindof NSOperation * _Nonnull )operation didFinishWithErrors:(nullable NSArray <NSError *>*)errors passingAdditionalData:(nullable id)data;
 - (nullable id)additionalDataToPassForChainedOperation;
 
 @end

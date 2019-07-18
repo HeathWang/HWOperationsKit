@@ -12,6 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface HWCountOperation : HWOperation
 
+@property (nonatomic, assign) NSInteger value;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -13,6 +13,9 @@
 #import "HWChainCondition.h"
 #import "HWBlockObserver.h"
 
+#define LOCK dispatch_semaphore_wait(_lock, DISPATCH_TIME_FOREVER);
+#define UNLOCK dispatch_semaphore_signal(_lock);
+
 @interface HWOperation ()
 
 @property (nonatomic, assign) BOOL hasFinishedAlready;
@@ -27,7 +30,7 @@
 
 @property (nonatomic, strong) NSHashTable <HWOperation <HWChainableOperationProtocol> *> *chainedOperations;
 
-@property (nonatomic, strong) dispatch_queue_t safeQueue;
+@property (nonatomic, strong) dispatch_semaphore_t lock;
 
 @end
 
@@ -41,7 +44,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _safeQueue = dispatch_queue_create("com.heath.HWOperationsKit", DISPATCH_QUEUE_CONCURRENT);
+        _lock = dispatch_semaphore_create(1);
     }
 
     return self;
@@ -83,30 +86,29 @@
 #pragma mark - prop
 
 - (void)setState:(HWOperationState)state {
-    dispatch_barrier_async(_safeQueue, ^{
-        [self willChangeValueForKey:@"state"];
-        NSAssert(self->_state != state, @"state状态转化错误，请检查！");
-        self->_state = state;
-        [self didChangeValueForKey:@"state"];
-    });
+     [self willChangeValueForKey:@"state"];
+    LOCK
+    NSAssert(_state != state, @"state状态转化错误，请检查！");
+    _state = state;
+    UNLOCK
+    [self didChangeValueForKey:@"state"];
+    
 }
 
 - (HWOperationState)state {
-//    __block HWOperationState state;
-//    dispatch_sync(_safeQueue, ^{
-//        state = self->_state;
-//    });
-//    return state;
-    return _state;
+    HWOperationState state;
+    UNLOCK
+    state = _state;
+    LOCK
+    return state;
 }
 
 - (BOOL)isCancelled {
-//    __block BOOL cancel;
-//    dispatch_sync(_safeQueue, ^{
-//        cancel = self->_cancelled;
-//    });
-//    return cancel;
-    return _cancelled;
+    BOOL cancel;
+    LOCK
+    cancel = _cancelled;
+    UNLOCK
+    return cancel;
 }
 
 /**
@@ -115,11 +117,11 @@
  * Support for cancellation is voluntary but encouraged and your own code should not have to send KVO notifications for this key path.
  */
 - (void)setCancelled:(BOOL)cancelled {
-    dispatch_barrier_async(_safeQueue, ^{
-        [self willChangeValueForKey:@"cancelledState"];
-        self->_cancelled = cancelled;
-        [self didChangeValueForKey:@"cancelledState"];
-    });
+    [self willChangeValueForKey:@"cancelledState"];
+    LOCK
+    _cancelled = cancelled;
+    UNLOCK
+    [self didChangeValueForKey:@"cancelledState"];
 }
 
 /**
@@ -127,32 +129,34 @@
  */
 - (BOOL)isReady {
     BOOL ready = NO;
-
-    switch (self.state) {
-        case HWOperationStateInitialized:
-            ready = [self isCancelled];
-            break;
-        case HWOperationStatePending: {
-
-            if ([self isCancelled]) {
-                [self setState:HWOperationStateReady];
-                ready = YES;
+    
+    @synchronized (self) {
+        switch (self.state) {
+            case HWOperationStateInitialized:
+                ready = [self isCancelled];
+                break;
+            case HWOperationStatePending: {
+                
+                if ([self isCancelled]) {
+                    [self setState:HWOperationStateReady];
+                    ready = YES;
+                    break;
+                }
+                
+                if ([super isReady]) {
+                    [self evaluateConditions];
+                }
+                ready = (self.state == HWOperationStateReady && ([super isReady] || [self isCancelled]));
                 break;
             }
-
-            if ([super isReady]) {
-                [self evaluateConditions];
-            }
-            ready = (self.state == HWOperationStateReady && ([super isReady] || [self isCancelled]));
-            break;
+            case HWOperationStateReady:
+                ready = [super isReady] || [self isCancelled];
+                break;
+            default:
+                ready = NO;
         }
-        case HWOperationStateReady:
-            ready = [super isReady] || [self isCancelled];
-            break;
-        default:
-            ready = NO;
     }
-
+    
     return ready;
 }
 
@@ -370,18 +374,17 @@
 }
 
 - (BOOL)hasFinishedAlready {
-//    __block BOOL hasFinished;
-//    dispatch_sync(_safeQueue, ^{
-//        hasFinished = self->_hasFinishedAlready;
-//    });
-//    return hasFinished;
-    return _hasFinishedAlready;
+    BOOL hasFinish;
+    LOCK
+    hasFinish = _hasFinishedAlready;
+    UNLOCK
+    return hasFinish;
 }
 
 - (void)setHasFinishedAlready:(BOOL)hasFinishedAlready {
-    dispatch_barrier_async(_safeQueue, ^{
-        self->_hasFinishedAlready = hasFinishedAlready;
-    });
+    LOCK
+    _hasFinishedAlready = hasFinishedAlready;
+    UNLOCK
 }
 
 #pragma mark - private method

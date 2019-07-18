@@ -31,6 +31,7 @@
     
     [self.view addSubview:button];
     self.button = button;
+    
 }
 
 - (void)didReceiveMemoryWarning

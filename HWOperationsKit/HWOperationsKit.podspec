@@ -22,11 +22,11 @@ HWOperationsKit custom operation to make you easier to use Operation.
 Use Operation to chain or group more easier.
                        DESC
 
-  s.homepage         = 'https://github.com/wangcongling/HWOperationsKit'
+  s.homepage         = 'https://github.com/HeathWang/HWOperationsKit'
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { 'wangcongling' => 'wangcongling06883@hellobike.com' }
-  s.source           = { :git => 'https://github.com/wangcongling/HWOperationsKit.git', :tag => s.version.to_s }
+  s.author           = { 'HeathWang' => 'yishu.jay@gmail.com' }
+  s.source           = { :git => 'https://github.com/HeathWang/HWOperationsKit', :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
   s.ios.deployment_target = '8.0'

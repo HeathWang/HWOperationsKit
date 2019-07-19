@@ -22,7 +22,7 @@ pod 'HWOperationsKit'
 
 ## Author
 
-wangcongling, wangcongling06883@hellobike.com
+HeathWang, yishu.jay@gmail.com
 
 ## License
 

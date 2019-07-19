@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface HWCountOperation : HWOperation
 
 @property (nonatomic, assign) NSInteger value;
+@property (nonatomic, copy) NSString *identifier;
 
 @end
 

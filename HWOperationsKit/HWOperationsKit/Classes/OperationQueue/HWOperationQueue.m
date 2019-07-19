@@ -42,7 +42,6 @@
             [[operation.chainedOperations allObjects] enumerateObjectsUsingBlock:^(HWOperation <HWChainableOperationProtocol> *chainOP, NSUInteger idx, BOOL *stop) {
                 [self addOperation:chainOP];
             }];
-//            [self addOperation:operation];
             return;
         }
 
@@ -71,11 +70,7 @@
             if (dependency) {
                 [operation addDependency:dependency];
                 
-                // 处理通过`addCondition`添加的chainCondition
-//                if ([dependency isKindOfClass:HWOperation.class]) {
-//                    HWOperation *tmpOP = (HWOperation *)dependency;
-//                    [self addOperation:tmpOP];
-//                }
+                // 通过addConditioni加入的op可能还没有加入的queue中。
                 if (![self.operations containsObject:dependency]) {
                     [self addOperation:dependency];
                 }
@@ -125,9 +120,9 @@
     return _chainOperationsCache;
 }
 
-- (void)dealloc {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
-}
+//- (void)dealloc {
+//    NSLog(@"%s", __PRETTY_FUNCTION__);
+//}
 
 @end
 

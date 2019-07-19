@@ -6,7 +6,7 @@
 //
 
 #import <HWOperationsKit/HWOperation.h>
-#import <HWOperationsKit/HWChainCondition.h>
+#import <HWOperationsKit/HWChainOperation.h>
 #import <HWOperationsKit/HWGroupOperation.h>
 #import <HWOperationsKit/NSOperation+HWBlock.h>
 

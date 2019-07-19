@@ -55,7 +55,7 @@
     if (!cancelBlock)
         return;
 
-    [self hw_addCancelBlockInMainQueue:^(__kindof NSOperation *operation) {
+    [self hw_addCompletionBlockInMainQueue:^(__kindof NSOperation *operation) {
         if ([operation isCancelled]) {
             cancelBlock(operation);
         }

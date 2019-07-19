@@ -253,10 +253,18 @@
     NSAssert(NO, @"调用`waitUntilFinished`是一种错误的设计模式，会造成线程阻塞。我们可以有很多其他的方式来实现同步操作，比如：`dispatch_semaphore_t` `dispatch_group_t` `NSLock`等。除非你清楚你在干什么，否则不要移除该方法!");
 }
 
+- (BOOL)isAsynchronous {
+    return YES;
+}
+
 #pragma mark - chain
 
 - (void)produceOperation:(nonnull NSOperation *)operation {
-
+    for (NSObject<HWOperationObserverProtocol> *observer in self.observers) {
+        if ([observer respondsToSelector:@selector(operation:didProduceOperation:)]) {
+            [observer operation:self didProduceOperation:operation];
+        }
+    }
 }
 
 - (void)chainWithOperation:(nonnull HWOperation <HWChainableOperationProtocol> *)operation {
@@ -265,7 +273,11 @@
 
     __weak typeof(operation) wkOP = operation;
     [self addObserver:[[HWBlockObserver alloc] initWithWillStartCallback:nil didStart:nil produce:nil finish:^(HWOperation *finishOperation, NSArray<NSError *> *errors) {
-        [wkOP chainedOperation:finishOperation didFinishWithErrors:errors passingAdditionalData:[finishOperation additionalDataToPassForChainedOperation]];
+        // 如果任务已经cancel，那么chain链将不会进行传递
+        if (![wkOP isCancelled]) {
+            [wkOP chainedOperation:finishOperation didFinishWithErrors:errors passingAdditionalData:[finishOperation additionalDataToPassForChainedOperation]];
+        }
+        
     }]];
 }
 
@@ -295,7 +307,6 @@
     // 子类实现
     return nil;
 }
-
 
 #pragma mark - public method
 
@@ -346,8 +357,10 @@
     if (!self.hasFinishedAlready) {
         self.hasFinishedAlready = YES;
         self.state = HWOperationStateFinishing;
-
-        self.internalErrors = [self.internalErrors arrayByAddingObjectsFromArray:errors];
+        
+        if (errors) {
+            self.internalErrors = [self.internalErrors arrayByAddingObjectsFromArray:errors];
+        }
         [self handleWithErrors:self.internalErrors];
 
         // 先把状态置为完成，再通知所有的observer回调完成
@@ -421,8 +434,8 @@
     return _internalErrors;
 }
 
-- (void)dealloc {
-    NSLog(@"%@ dealloc", NSStringFromClass(self.class));
-}
+//- (void)dealloc {
+//    NSLog(@"%@ dealloc", NSStringFromClass(self.class));
+//}
 
 @end

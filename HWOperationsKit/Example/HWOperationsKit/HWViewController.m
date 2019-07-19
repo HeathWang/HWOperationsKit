@@ -13,6 +13,7 @@
 @interface HWViewController ()
 
 @property (nonatomic, strong) UIButton *button;
+@property (nonatomic, assign) NSInteger queueTag;
 
 @end
 
@@ -23,14 +24,18 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
 	UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-    button.backgroundColor = [UIColor colorWithRed:0.000 green:1.000 blue:0.800 alpha:1.00];
+    button.backgroundColor = [UIColor colorWithRed:0.000 green:0.200 blue:0.800 alpha:1.00];
     [button setTitle:@"测试" forState:UIControlStateNormal];
     [button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     button.titleLabel.font = [UIFont boldSystemFontOfSize:20];
+    button.layer.masksToBounds = YES;
+    button.layer.cornerRadius = 6;
     [button addTarget:self action:@selector(testAction) forControlEvents:UIControlEventTouchUpInside];
     
     [self.view addSubview:button];
     self.button = button;
+    
+    self.queueTag = 0;
     
 }
 
@@ -49,19 +54,65 @@
 }
 
 - (void)testAction {
-    [self testNormalAddChainOP];
+//    [self testNormalAddChainOP];
+    [self testChainOperation];
+//    [self testGroupOperation];
 }
 
 - (void)testNormalAddChainOP {
-    HWCountOperation *op1 = [HWCountOperation new];
-    op1.value = 1;
+
+    [[HWOperationQueue globalQueue] cancelAllOperations];
     
-    HWCountOperation *op2 = [HWCountOperation new];
-    op2.value = 2;
+    self.queueTag ++;
+    NSMutableArray *opList = [NSMutableArray array];
+    for (int i = 1; i < 11; i ++) {
+        HWCountOperation *op = [HWCountOperation new];
+        op.value = i;
+        op.identifier = [NSString stringWithFormat:@"#%ld-%ld号", (long)self.queueTag, (long) i];
+        [opList addObject:op];
+    }
     
-    [op1 chainWithOperation:op2];
-    [op1 runInGlobalQueue];
+    [HWOperation chainOperations:opList];
     
+    [[HWOperationQueue globalQueue] addOperations:opList waitUntilFinished:NO];
+    
+}
+
+- (void)testChainOperation {
+    self.queueTag ++;
+    NSMutableArray *opList = [NSMutableArray array];
+    for (int i = 1; i < 11; i ++) {
+        HWCountOperation *op = [HWCountOperation new];
+        op.value = i;
+        op.identifier = [NSString stringWithFormat:@"#%ld-%ld号", (long)self.queueTag, (long) i];
+        [opList addObject:op];
+    }
+
+    HWChainOperation *chainOperation = [[HWChainOperation alloc] initWithOperations:opList];
+    chainOperation.finishIfProducedAnyError = YES;
+
+    [chainOperation hw_addCompletionBlockInMainQueue:^(__kindof NSOperation * _Nonnull operation) {
+        NSLog(@"all chain ops done.");
+    }];
+        
+    [chainOperation runInGlobalQueue];
+    
+}
+
+-  (void)testGroupOperation {
+    self.queueTag ++;
+    NSMutableArray *opList = [NSMutableArray array];
+    for (int i = 1; i < 11; i ++) {
+        HWCountOperation *op = [HWCountOperation new];
+        op.value = i;
+        op.identifier = [NSString stringWithFormat:@"#%ld-%ld号", (long)self.queueTag, (long) i];
+        [opList addObject:op];
+    }
+    HWGroupOperation *groupOperation = [[HWGroupOperation alloc] initWithOperations:opList];
+    [groupOperation hw_addCancelBlockInMainQueue:^(__kindof NSOperation *operation) {
+        NSLog(@"all group op done.");
+    }];
+    [groupOperation runInGlobalQueue];
 }
 
 @end

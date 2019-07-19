@@ -1,5 +1,5 @@
 PODS:
-  - HWOperationsKit (0.1.0)
+  - HWOperationsKit (0.2.0)
 
 DEPENDENCIES:
   - HWOperationsKit (from `../`)
@@ -9,7 +9,7 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  HWOperationsKit: 2d2d64ac6cd2b386a6e7885708ad84aaf3975cfc
+  HWOperationsKit: f93a6eced46317c2600aaebb5084671a2467b11f
 
 PODFILE CHECKSUM: 0d3b3699f01a89d1f1fe292ec8d9d99fdf76d1f9
 

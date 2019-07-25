@@ -22,9 +22,9 @@ NS_ASSUME_NONNULL_BEGIN
  * 根据目标chainOperation来初始化condition
  * @param chainOperation 持有该condition的op会添加chainOperation为自身的依赖
  */
-- (instancetype)initWithChainOperation:(NSOperation *)chainOperation;
+- (instancetype)initWithChainOperation:(nonnull NSOperation *)chainOperation;
 
-+ (instancetype)conditionWithChainOperation:(NSOperation *)chainOperation;
++ (instancetype)conditionWithChainOperation:(nonnull NSOperation *)chainOperation;
 
 @end
 

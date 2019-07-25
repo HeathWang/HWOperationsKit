@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, assign) NSInteger value;
 @property (nonatomic, copy) NSString *identifier;
+@property (nonatomic, assign) NSTimeInterval delay;
 
 @end
 

@@ -9,11 +9,14 @@
 #import "HWViewController.h"
 #import <HWOperationsKit/HWOperationsKit.h>
 #import "HWCountOperation.h"
+#import "HWCountCondition.h"
 
-@interface HWViewController ()
+@interface HWViewController () <UITableViewDataSource, UITableViewDelegate>
 
-@property (nonatomic, strong) UIButton *button;
 @property (nonatomic, assign) NSInteger queueTag;
+
+@property (nonatomic, strong) UITableView *tableView;
+@property (nonatomic, copy) NSArray *testActions;
 
 @end
 
@@ -23,18 +26,7 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
-	UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-    button.backgroundColor = [UIColor colorWithRed:0.000 green:0.200 blue:0.800 alpha:1.00];
-    [button setTitle:@"测试" forState:UIControlStateNormal];
-    [button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    button.titleLabel.font = [UIFont boldSystemFontOfSize:20];
-    button.layer.masksToBounds = YES;
-    button.layer.cornerRadius = 6;
-    [button addTarget:self action:@selector(testAction) forControlEvents:UIControlEventTouchUpInside];
-    
-    [self.view addSubview:button];
-    self.button = button;
-    
+    [self.view addSubview:self.tableView];
     self.queueTag = 0;
     
 }
@@ -47,16 +39,79 @@
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
-
-    CGSize size = CGSizeMake(100, 60);
     CGRect rect = self.view.bounds;
-    self.button.frame = CGRectMake((CGRectGetWidth(rect) - size.width) / 2, (CGRectGetHeight(rect) - size.height) / 2, size.width, size.height);
+    self.tableView.frame = rect;
 }
 
-- (void)testAction {
-//    [self testNormalAddChainOP];
-    [self testChainOperation];
-//    [self testGroupOperation];
+#pragma mark - UITableViewDataSource
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return self.testActions.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:NSStringFromClass(UITableViewCell.class) forIndexPath:indexPath];
+    cell.textLabel.text = self.testActions[indexPath.row];
+
+    return cell;
+}
+
+#pragma mark - UITableViewDelegate
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    switch (indexPath.row) {
+        case 0: {
+            [self testDefaultOperationUseage];
+        }
+            break;
+        case 1: {
+            [self testChainOperation];
+        }
+            break;
+        case 2: {
+            [self testGroupOperation];
+        }
+            break;
+        case 3: {
+
+        }
+            break;
+        default:
+            break;
+    }
+}
+
+- (void)testDefaultOperationUseage {
+
+    // 初始化一个观察者，可以接收到op各个状态的回调
+    HWBlockObserver *observer = [[HWBlockObserver alloc] initWithWillStartCallback:^(HWOperation *operation, HWOperationQueue *operationQueue) {
+        NSLog(@"op 即将开始，说明op即将加入到queue");
+    } didStart:^(HWOperation *operation) {
+        NSLog(@"op开始执行");
+    } produce:^(HWOperation *operation, NSOperation *newOperation) {
+        NSLog(@"该op产生了一个新的op: %@", newOperation);
+    } finish:^(HWOperation *operation, NSArray<NSError *> *errors) {
+        NSLog(@"op完成");
+        if (errors) {
+            NSLog(@"出现错误, 错误为：%@", errors);
+        }
+    }];
+
+
+    HWCountOperation *countOperation = [HWCountOperation new];
+    countOperation.value = 100;
+    countOperation.identifier = @"基础功能测试";
+    // 使用category中的方法来捕获op完成或者取消的回调
+    [countOperation hw_addCompletionBlock:^(__kindof NSOperation *operation) {
+        NSLog(@"op完成操作，从category方法中捕获。");
+    }];
+
+    HWCountCondition *condition = [HWCountCondition conditionWithCountOperation:countOperation];
+    [countOperation addCondition:condition];
+
+    [countOperation addObserver:observer];
+    [countOperation runInGlobalQueue];
 }
 
 - (void)testNormalAddChainOP {
@@ -85,6 +140,7 @@
         HWCountOperation *op = [HWCountOperation new];
         op.value = i;
         op.identifier = [NSString stringWithFormat:@"#%ld-%ld号", (long)self.queueTag, (long) i];
+        op.delay = 1;
         [opList addObject:op];
     }
 
@@ -114,5 +170,27 @@
     }];
     [groupOperation runInGlobalQueue];
 }
+
+#pragma mark - Getter
+
+- (UITableView *)tableView {
+    if (!_tableView) {
+        _tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleGrouped];
+        [_tableView registerClass:UITableViewCell.class forCellReuseIdentifier:NSStringFromClass(UITableViewCell.class)];
+        _tableView.rowHeight = 56;
+
+        _tableView.delegate = self;
+        _tableView.dataSource = self;
+    }
+    return _tableView;
+}
+
+- (NSArray *)testActions {
+    if (!_testActions) {
+        _testActions = @[@"基本功能测试", @"chain链operation测试", @"group operation测试", @"混合op测试"];
+    }
+    return _testActions;
+}
+
 
 @end

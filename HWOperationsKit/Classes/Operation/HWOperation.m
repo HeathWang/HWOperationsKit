@@ -335,13 +335,6 @@
 
 #pragma mark - cancel
 
-- (void)cancelWithError:(nullable NSError *)error {
-    if (error) {
-        self.internalErrors = [self.internalErrors arrayByAddingObject:error];
-        [self cancel];
-    }
-}
-
 - (void)cancelWithErrors:(nullable NSArray <NSError *> *)errors {
     self.internalErrors = [self.internalErrors arrayByAddingObjectsFromArray:errors];
     [self cancel];
@@ -350,7 +343,7 @@
 #pragma mark - finish
 
 - (void)finish {
-    [self finishWithError:nil];
+    [self finishWithErrors:nil];
 }
 
 - (void)finishWithErrors:(nullable NSArray <NSError *> *)errors {
@@ -371,15 +364,6 @@
             }
         }
     }
-}
-
-- (void)finishWithError:(nullable NSError *)error {
-    if (error) {
-        [self finishWithErrors:@[error]];
-    } else {
-        [self finishWithErrors:nil];
-    }
-
 }
 
 - (void)handleWithErrors:(nonnull NSArray <NSError *> *)errors {

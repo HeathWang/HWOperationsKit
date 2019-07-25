@@ -35,7 +35,7 @@
     return NSStringFromClass(self.class);
 }
 
-- (nonnull __kindof NSOperation *)dependencyForOperation:(nonnull HWOperation *)operation {
+- (nullable __kindof NSOperation *)dependencyForOperation:(nonnull HWOperation *)operation {
     return self.chainOperation;
 }
 

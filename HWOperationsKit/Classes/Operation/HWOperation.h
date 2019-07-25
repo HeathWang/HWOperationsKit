@@ -24,6 +24,11 @@ typedef NS_ENUM(NSInteger, HWOperationState) {
 
 NS_ASSUME_NONNULL_BEGIN
 
+/**
+ * 继承自NSOperation并实现了HWChainableOperationProtocol协议
+ * 可添加多个实现了HWOperationObserverProtocol协议的observer
+ * 在op执行前会对所有的conditions进行评估校验，如果有HWOperationConditionProtocol出现error，则cancel该op
+ */
 @interface HWOperation : NSOperation <HWChainableOperationProtocol>
 
 @property(readonly, getter=isCancelled) BOOL cancelled;
@@ -53,13 +58,13 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - finish
 /**
  * 子类必须在合适的实际调用一下几个`finish`方法来使op finish
+ * 最终调用`- (void)finishWithErrors:(nullable NSArray <NSError *> *)errors`
  */
-- (void)finish;
+- (void)finish NS_REQUIRES_SUPER;
 /**
  * 子类可重写该方法，但必须调用super
  */
 - (void)finishWithErrors:(nullable NSArray <NSError *> *)errors NS_REQUIRES_SUPER;
-- (void)finishWithError:(nullable NSError *)error;
 /**
  * 默认该方法什么都没有做，子类可重写，针对op即将完成的情况，对所有的errors进行处理。
  * @param errors op执行时产生的错误list
@@ -68,8 +73,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - cancel
 - (void)cancel NS_REQUIRES_SUPER;
-- (void)cancelWithError:(nullable NSError *)error;
-- (void)cancelWithErrors:(nullable NSArray <NSError *> *)errors;
+- (void)cancelWithErrors:(nullable NSArray <NSError *> *)errors NS_REQUIRES_SUPER;
 
 #pragma mark - run
 /**

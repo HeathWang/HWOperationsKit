@@ -9,7 +9,7 @@
 @class HWOperationConditionResult;
 
 /**
- * Operation condition 协议
+ * Operation condition 协议，用于在operation开始执行任务之前对其进行前置校验
  */
 @protocol HWOperationConditionProtocol <NSObject>
 
@@ -24,10 +24,10 @@
  * @param operation 目标op
  * @return 依赖的operation，即`- (void)addDependency:(NSOperation *)op;`中的op
  */
-- (nonnull __kindof NSOperation *)dependencyForOperation:(nonnull HWOperation *)operation;
+- (nullable __kindof NSOperation *)dependencyForOperation:(nonnull HWOperation *)operation;
 
 /**
- * 对目标参数op进行状态评估
+ * 对目标参数op进行状态评估， 默认情况下，如果resultc包含错误，那么该op自动取消
  * @param operation 目标op
  * @param completion 评估回调
  */

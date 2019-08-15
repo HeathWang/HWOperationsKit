@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'HWOperationsKit'
-  s.version          = '0.3.0'
+  s.version          = '0.3.1'
   s.summary          = 'HWOperationsKit custom operation to make you easier to use Operation.'
 
 # This description is used to generate tags and improve search results.

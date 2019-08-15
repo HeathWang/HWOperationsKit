@@ -2,8 +2,8 @@
 //  HWViewController.m
 //  HWOperationsKit
 //
-//  Created by wangcongling on 07/17/2019.
-//  Copyright (c) 2019 wangcongling. All rights reserved.
+//  Created by heathwang on 07/17/2019.
+//  Copyright (c) 2019 heathwang. All rights reserved.
 //
 
 #import "HWViewController.h"
